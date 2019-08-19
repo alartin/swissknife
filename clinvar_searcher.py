@@ -31,7 +31,7 @@ import collections
 import json
 
 
-Variant = collections.namedtuple('Variant', 'accession name vtype assembly band start stop') 
+Variant = collections.namedtuple('Variant', 'accession name vtype significance assembly band start stop') 
 
 def main(gene: str):
     
@@ -58,12 +58,20 @@ def getVariant(id: str):
     res = json.load(result)
     vid = res['result'][id] 
     acc, vtype, name = vid['accession'], vid['obj_type'], vid['title']
+    sig = vid['clinical_significance']['description']
     # all locs of the 1st var
     vlocs = vid['variation_set'][0]['variation_loc']
     # current loc
-    cvloc = next(l for l in vlocs if l['status'] == 'current') 
+    cvloc = None
+    # if only one entry, just take it
+    if len(vlocs) == 1:
+        cvloc = vlocs[0]
+    # if more than 1 record, there must be a 'current' entry
+    else:
+        cvloc = next(l for l in vlocs if l['status'] == 'current') 
+
     assembly, band, start, stop = cvloc['assembly_name'], cvloc['band'], cvloc['start'], cvloc['stop']
-    variant = Variant(accession=acc, name=name, vtype=vtype, assembly=assembly, band=band, start=start, stop=stop)
+    variant = Variant(accession=acc, name=name, vtype=vtype, significance=sig, assembly=assembly, band=band, start=start, stop=stop)
     return variant
     
      
